@@ -35,8 +35,7 @@ func main() {
 		activitiesPage, _, err := client.ActivitiesApi.GetLoggedInAthleteActivities(
 			oauthCtx,
 			map[string]interface{}{
-				"page": int32(i),
-				// 200 appears to be the most Strava will let you grab per call.
+				"page":    int32(i),
 				"perPage": int32(200),
 			},
 		)
@@ -53,6 +52,6 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("%s: %s: %.2fkm: %v\n", a.Name, a.StartDateLocal, a.Distance/1e3, dur)
+		fmt.Printf("%s: %s: %.2fkm: %v\n", a.Name, a.StartDateLocal.Format("2016-01-02"), a.Distance/1e3, dur)
 	}
 }
