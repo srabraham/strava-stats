@@ -45,6 +45,7 @@ func main() {
 		if len(activitiesPage) == 0 {
 			break
 		}
+		log.Printf("Got page %d of activities", i)
 		activities = append(activities, activitiesPage...)
 	}
 	for _, a := range activities {
