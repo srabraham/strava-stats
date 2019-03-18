@@ -53,6 +53,6 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("%s: %s: %.2fkm: %v\n", a.Name, a.StartDateLocal.Format("2016-01-02"), a.Distance/1e3, dur)
+		fmt.Printf("%s, %.2fkm, %v, %s\n", a.StartDateLocal.Format("2006-01-02"), a.Distance/1e3, dur, a.Name)
 	}
 }
