@@ -6,6 +6,8 @@ github.com/golang/protobuf v1.2.0 h1:P3YflyNX/ehuJFLhxviNdFxQPkGK5cDcApsge1SqnvM
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/srabraham/strava-oauth-helper v0.0.0-20190317234731-d44211d0dd56 h1:WJ/xufP3bNmwfb3iq4dqUzOuRrdOFl0YbdDPpPUNEqA=
 github.com/srabraham/strava-oauth-helper v0.0.0-20190317234731-d44211d0dd56/go.mod h1:WxF/OUNdKLErsGco21ekxa/LJCk6qVLXynUlYraYeQM=
+github.com/srabraham/strava-oauth-helper v0.0.0-20190319004537-6fa2bae7c3ca h1:TxthhhZJou8caMFTd22KrFpvMsN8/v6sXCx0di1klMU=
+github.com/srabraham/strava-oauth-helper v0.0.0-20190319004537-6fa2bae7c3ca/go.mod h1:WxF/OUNdKLErsGco21ekxa/LJCk6qVLXynUlYraYeQM=
 github.com/srabraham/swagger-strava-go v0.0.0-20190310022918-a9f422243df0 h1:gPJ3V5lYT23UBAj1QO+6tvSTcWWcxE0fYnf1gWt0QaY=
 github.com/srabraham/swagger-strava-go v0.0.0-20190310022918-a9f422243df0/go.mod h1:YLeyJZU6wKARvFgQp7bF2jRzYLq1sBkf7qmYCbqcS/w=
 github.com/srabraham/swagger-strava-go v0.0.0-20190318033004-3e5afe04cf23 h1:fIy0DpEoZ4OKIL+461J9k5MkCr1eEf4ZN2Gk3Bhq+uQ=
