@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
@@ -14,6 +15,20 @@ import (
 	"google.golang.org/api/sheets/v4"
 
 	strava "github.com/srabraham/swagger-strava-go"
+)
+
+var (
+	athleteOutFile    = flag.String("athlete-out-file", "", "File in which to spew athlete details, or blank to not output such a file")
+	activitiesOutFile = flag.String("activities-out-file", "", "File in which to spew out all activities, or blank to not output such a file")
+	workoutType       = map[int32]string{
+		0:  "Run",
+		1:  "Foot race",
+		2:  "Long run",
+		3:  "Run workout",
+		10: "Bike",
+		11: "Bike race",
+		12: "Bike workout",
+	}
 )
 
 func main() {
@@ -32,6 +47,18 @@ func main() {
 	athlete := *getLoggedInAthleteProfile(sClient, &oauthCtx)
 	activities := *getLoggedInAthleteActivities(sClient, &oauthCtx)
 
+	if *athleteOutFile != "" {
+		err = ioutil.WriteFile(*athleteOutFile, []byte(spew.Sdump(athlete)), 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	if *activitiesOutFile != "" {
+		err = ioutil.WriteFile(*activitiesOutFile, []byte(spew.Sdump(activities)), 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 	// Create a new Spreadsheet and populate it with the Strava data
 	sheetsService, err := sheets.New(gClient)
 	if err != nil {
@@ -133,6 +160,9 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 			{UserEnteredValue: &sheets.ExtendedValue{
 				StringValue: "Activity name",
 			}},
+			{UserEnteredValue: &sheets.ExtendedValue{
+				StringValue: "Workout type",
+			}},
 		}},
 	)
 	for _, a := range *activities {
@@ -195,6 +225,11 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 				{
 					UserEnteredValue: &sheets.ExtendedValue{
 						StringValue: a.Name,
+					},
+				},
+				{
+					UserEnteredValue: &sheets.ExtendedValue{
+						StringValue: workoutType[a.WorkoutType],
 					},
 				},
 			},
