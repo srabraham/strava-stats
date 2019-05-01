@@ -163,6 +163,9 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 			{UserEnteredValue: &sheets.ExtendedValue{
 				StringValue: "Workout type",
 			}},
+			{UserEnteredValue: &sheets.ExtendedValue{
+				StringValue: "URL",
+			}},
 		}},
 	)
 	for _, a := range *activities {
@@ -230,6 +233,11 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 				{
 					UserEnteredValue: &sheets.ExtendedValue{
 						StringValue: workoutType[a.WorkoutType],
+					},
+				},
+				{
+					UserEnteredValue: &sheets.ExtendedValue{
+						StringValue: fmt.Sprintf("https://www.strava.com/activities/%d", a.Id),
 					},
 				},
 			},
