@@ -131,6 +131,9 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 				StringValue: "Elevation gain (m)",
 			}},
 			{UserEnteredValue: &sheets.ExtendedValue{
+				StringValue: "Highest elevation (m)",
+			}},
+			{UserEnteredValue: &sheets.ExtendedValue{
 				StringValue: "Activity name",
 			}},
 		}},
@@ -184,6 +187,17 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 				{
 					UserEnteredValue: &sheets.ExtendedValue{
 						NumberValue: float64(a.TotalElevationGain),
+					},
+					UserEnteredFormat: &sheets.CellFormat{
+						NumberFormat: &sheets.NumberFormat{
+							Pattern: "0.0",
+							Type:    "NUMBER",
+						},
+					},
+				},
+				{
+					UserEnteredValue: &sheets.ExtendedValue{
+						NumberValue: float64(a.ElevHigh),
 					},
 					UserEnteredFormat: &sheets.CellFormat{
 						NumberFormat: &sheets.NumberFormat{
