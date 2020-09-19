@@ -146,7 +146,7 @@ type cellCalc struct {
 func header(name string) *sheets.CellData {
 	return &sheets.CellData{
 		UserEnteredValue: &sheets.ExtendedValue{
-			StringValue: "Date",
+			StringValue: name,
 		},
 	}
 }
@@ -179,7 +179,21 @@ func distanceKm(distM float32) *sheets.CellData {
 	}
 }
 
-func distanceM(distM float32) *sheets.CellData {
+func distanceMiles(distM float32) *sheets.CellData {
+	return &sheets.CellData{
+		UserEnteredValue: &sheets.ExtendedValue{
+			NumberValue: float64(distM) * 0.000621371192,
+		},
+		UserEnteredFormat: &sheets.CellFormat{
+			NumberFormat: &sheets.NumberFormat{
+				Pattern: "0.00",
+				Type:    "NUMBER",
+			},
+		},
+	}
+}
+
+func distanceMeters(distM float32) *sheets.CellData {
 	return &sheets.CellData{
 		UserEnteredValue: &sheets.ExtendedValue{
 			NumberValue: float64(distM),
@@ -193,11 +207,25 @@ func distanceM(distM float32) *sheets.CellData {
 	}
 }
 
+func distanceFeet(distM float32) *sheets.CellData {
+	return &sheets.CellData{
+		UserEnteredValue: &sheets.ExtendedValue{
+			NumberValue: float64(distM) * 3.28084,
+		},
+		UserEnteredFormat: &sheets.CellFormat{
+			NumberFormat: &sheets.NumberFormat{
+				Pattern: "0",
+				Type:    "NUMBER",
+			},
+		},
+	}
+}
+
 func duration(sec int32) *sheets.CellData {
 	return &sheets.CellData{
-	UserEnteredValue: &sheets.ExtendedValue{
-		NumberValue: float64(sec) / (24 * 60 * 60),
-	},
+		UserEnteredValue: &sheets.ExtendedValue{
+			NumberValue: float64(sec) / (24 * 60 * 60),
+		},
 		UserEnteredFormat: &sheets.CellFormat{
 			NumberFormat: &sheets.NumberFormat{
 				Pattern: "[h]:mm:ss",
@@ -208,8 +236,7 @@ func duration(sec int32) *sheets.CellData {
 }
 
 func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strava.SummaryActivity) *sheets.Spreadsheet {
-
-	cellCalcs := []cellCalc{
+	columns := []cellCalc{
 		{
 			header: header("Date"),
 			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
@@ -227,9 +254,9 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 			},
 		},
 		{
-			header: header("Distance (km)"),
+			header: header("Distance (mi)"),
 			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
-				return distanceKm(activity.Distance)
+				return distanceMiles(activity.Distance)
 			},
 		},
 		{
@@ -239,15 +266,15 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 			},
 		},
 		{
-			header: header("Elevation gain (m)"),
+			header: header("Elevation gain (ft)"),
 			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
-				return distanceM(activity.TotalElevationGain)
+				return distanceFeet(activity.TotalElevationGain)
 			},
 		},
 		{
-			header: header("Highest elevation (m)"),
+			header: header("Highest elevation (ft)"),
 			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
-				return distanceM(activity.ElevHigh)
+				return distanceFeet(activity.ElevHigh)
 			},
 		},
 		{
@@ -284,14 +311,14 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 
 	rowData := make([]*sheets.RowData, 0)
 	header := &sheets.RowData{}
-	for _, cc := range cellCalcs {
+	for _, cc := range columns {
 		header.Values = append(header.Values, cc.header)
 	}
 	rowData = append(rowData, header)
 
 	for _, a := range *activities {
 		row := &sheets.RowData{}
-		for _, cc := range cellCalcs {
+		for _, cc := range columns {
 			row.Values = append(row.Values, cc.cellFunc(athlete, &a))
 		}
 		rowData = append(rowData, row)
