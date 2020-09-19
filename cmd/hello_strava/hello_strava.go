@@ -138,124 +138,163 @@ func getGoogleClient() *http.Client {
 	return googleClient
 }
 
-func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strava.SummaryActivity) *sheets.Spreadsheet {
-	rowData := make([]*sheets.RowData, 0)
-	rowData = append(rowData, &sheets.RowData{
-		Values: []*sheets.CellData{
-			{UserEnteredValue: &sheets.ExtendedValue{
-				StringValue: "Date",
-			}},
-			{UserEnteredValue: &sheets.ExtendedValue{
-				StringValue: "Type",
-			}},
-			{UserEnteredValue: &sheets.ExtendedValue{
-				StringValue: "Distance (km)",
-			}},
-			{UserEnteredValue: &sheets.ExtendedValue{
-				StringValue: "Moving time",
-			}},
-			{UserEnteredValue: &sheets.ExtendedValue{
-				StringValue: "Elevation gain (m)",
-			}},
-			{UserEnteredValue: &sheets.ExtendedValue{
-				StringValue: "Highest elevation (m)",
-			}},
-			{UserEnteredValue: &sheets.ExtendedValue{
-				StringValue: "Activity name",
-			}},
-			{UserEnteredValue: &sheets.ExtendedValue{
-				StringValue: "Workout type",
-			}},
-			{UserEnteredValue: &sheets.ExtendedValue{
-				StringValue: "URL",
-			}},
-		}},
-	)
-	for _, a := range *activities {
-		// dur, err := time.ParseDuration(fmt.Sprintf("%ds", a.MovingTime))
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
-		// fmt.Printf("%s, %.2fkm, %v, %s\n", a.StartDateLocal.Format("2006-01-02"), a.Distance/1e3, dur, a.Name)
-		rowData = append(rowData, &sheets.RowData{
-			Values: []*sheets.CellData{
-				{
-					UserEnteredValue: &sheets.ExtendedValue{
-						StringValue: a.StartDateLocal.Format("2006-01-02"),
-					},
-					UserEnteredFormat: &sheets.CellFormat{
-						NumberFormat: &sheets.NumberFormat{
-							Pattern: "yyyy-mm-dd",
-							Type:    "DATE",
-						},
-					},
-				},
-				{
-					UserEnteredValue: &sheets.ExtendedValue{
-						StringValue: string(*a.Type_),
-					},
-				},
-				{
-					UserEnteredValue: &sheets.ExtendedValue{
-						NumberValue: float64(a.Distance) / 1e3,
-					},
-					UserEnteredFormat: &sheets.CellFormat{
-						NumberFormat: &sheets.NumberFormat{
-							Pattern: "0.00",
-							Type:    "NUMBER",
-						},
-					},
-				},
-				{
-					UserEnteredValue: &sheets.ExtendedValue{
-						NumberValue: float64(a.MovingTime) / (24 * 60 * 60),
-					},
-					UserEnteredFormat: &sheets.CellFormat{
-						NumberFormat: &sheets.NumberFormat{
-							Pattern: "[h]:mm:ss",
-							Type:    "TIME",
-						},
-					},
-				},
-				{
-					UserEnteredValue: &sheets.ExtendedValue{
-						NumberValue: float64(a.TotalElevationGain),
-					},
-					UserEnteredFormat: &sheets.CellFormat{
-						NumberFormat: &sheets.NumberFormat{
-							Pattern: "0.0",
-							Type:    "NUMBER",
-						},
-					},
-				},
-				{
-					UserEnteredValue: &sheets.ExtendedValue{
-						NumberValue: float64(a.ElevHigh),
-					},
-					UserEnteredFormat: &sheets.CellFormat{
-						NumberFormat: &sheets.NumberFormat{
-							Pattern: "0.0",
-							Type:    "NUMBER",
-						},
-					},
-				},
-				{
-					UserEnteredValue: &sheets.ExtendedValue{
-						StringValue: a.Name,
-					},
-				},
-				{
-					UserEnteredValue: &sheets.ExtendedValue{
-						StringValue: workoutType[a.WorkoutType],
-					},
-				},
-				{
-					UserEnteredValue: &sheets.ExtendedValue{
-						StringValue: fmt.Sprintf("https://www.strava.com/activities/%d", a.Id),
-					},
-				},
+type cellCalc struct {
+	header   *sheets.CellData
+	cellFunc func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData
+}
+
+func header(name string) *sheets.CellData {
+	return &sheets.CellData{
+		UserEnteredValue: &sheets.ExtendedValue{
+			StringValue: "Date",
+		},
+	}
+}
+
+func date(t time.Time) *sheets.CellData {
+	return &sheets.CellData{
+		UserEnteredValue: &sheets.ExtendedValue{
+			StringValue: t.Format("2006-01-02"),
+		},
+		UserEnteredFormat: &sheets.CellFormat{
+			NumberFormat: &sheets.NumberFormat{
+				Pattern: "yyyy-mm-dd",
+				Type:    "DATE",
 			},
-		})
+		},
+	}
+}
+
+func distanceKm(distM float32) *sheets.CellData {
+	return &sheets.CellData{
+		UserEnteredValue: &sheets.ExtendedValue{
+			NumberValue: float64(distM) / 1e3,
+		},
+		UserEnteredFormat: &sheets.CellFormat{
+			NumberFormat: &sheets.NumberFormat{
+				Pattern: "0.00",
+				Type:    "NUMBER",
+			},
+		},
+	}
+}
+
+func distanceM(distM float32) *sheets.CellData {
+	return &sheets.CellData{
+		UserEnteredValue: &sheets.ExtendedValue{
+			NumberValue: float64(distM),
+		},
+		UserEnteredFormat: &sheets.CellFormat{
+			NumberFormat: &sheets.NumberFormat{
+				Pattern: "0.0",
+				Type:    "NUMBER",
+			},
+		},
+	}
+}
+
+func duration(sec int32) *sheets.CellData {
+	return &sheets.CellData{
+	UserEnteredValue: &sheets.ExtendedValue{
+		NumberValue: float64(sec) / (24 * 60 * 60),
+	},
+		UserEnteredFormat: &sheets.CellFormat{
+			NumberFormat: &sheets.NumberFormat{
+				Pattern: "[h]:mm:ss",
+				Type:    "TIME",
+			},
+		},
+	}
+}
+
+func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strava.SummaryActivity) *sheets.Spreadsheet {
+
+	cellCalcs := []cellCalc{
+		{
+			header: header("Date"),
+			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
+				return date(activity.StartDateLocal)
+			},
+		},
+		{
+			header: header("Type"),
+			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
+				return &sheets.CellData{
+					UserEnteredValue: &sheets.ExtendedValue{
+						StringValue: string(*activity.Type_),
+					},
+				}
+			},
+		},
+		{
+			header: header("Distance (km)"),
+			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
+				return distanceKm(activity.Distance)
+			},
+		},
+		{
+			header: header("Moving time"),
+			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
+				return duration(activity.MovingTime)
+			},
+		},
+		{
+			header: header("Elevation gain (m)"),
+			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
+				return distanceM(activity.TotalElevationGain)
+			},
+		},
+		{
+			header: header("Highest elevation (m)"),
+			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
+				return distanceM(activity.ElevHigh)
+			},
+		},
+		{
+			header: header("Activity name"),
+			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
+				return &sheets.CellData{
+					UserEnteredValue: &sheets.ExtendedValue{
+						StringValue: activity.Name,
+					},
+				}
+			},
+		},
+		{
+			header: header("Workout type"),
+			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
+				return &sheets.CellData{
+					UserEnteredValue: &sheets.ExtendedValue{
+						StringValue: workoutType[activity.WorkoutType],
+					},
+				}
+			},
+		},
+		{
+			header: header("URL"),
+			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
+				return &sheets.CellData{
+					UserEnteredValue: &sheets.ExtendedValue{
+						StringValue: fmt.Sprintf("https://www.strava.com/activities/%d", activity.Id),
+					},
+				}
+			},
+		},
+	}
+
+	rowData := make([]*sheets.RowData, 0)
+	header := &sheets.RowData{}
+	for _, cc := range cellCalcs {
+		header.Values = append(header.Values, cc.header)
+	}
+	rowData = append(rowData, header)
+
+	for _, a := range *activities {
+		row := &sheets.RowData{}
+		for _, cc := range cellCalcs {
+			row.Values = append(row.Values, cc.cellFunc(athlete, &a))
+		}
+		rowData = append(rowData, row)
 	}
 
 	ss := &sheets.Spreadsheet{
