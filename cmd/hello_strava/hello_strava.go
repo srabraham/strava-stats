@@ -146,15 +146,16 @@ type cellCalc struct {
 func header(name string) *sheets.CellData {
 	return &sheets.CellData{
 		UserEnteredValue: &sheets.ExtendedValue{
-			StringValue: name,
+			StringValue: &name,
 		},
 	}
 }
 
 func date(t time.Time) *sheets.CellData {
+	format := t.Format("2006-01-02")
 	return &sheets.CellData{
 		UserEnteredValue: &sheets.ExtendedValue{
-			StringValue: t.Format("2006-01-02"),
+			StringValue: &format,
 		},
 		UserEnteredFormat: &sheets.CellFormat{
 			NumberFormat: &sheets.NumberFormat{
@@ -166,9 +167,10 @@ func date(t time.Time) *sheets.CellData {
 }
 
 func distanceKm(distM float32) *sheets.CellData {
+	f := float64(distM) / 1e3
 	return &sheets.CellData{
 		UserEnteredValue: &sheets.ExtendedValue{
-			NumberValue: float64(distM) / 1e3,
+			NumberValue: &f,
 		},
 		UserEnteredFormat: &sheets.CellFormat{
 			NumberFormat: &sheets.NumberFormat{
@@ -180,9 +182,10 @@ func distanceKm(distM float32) *sheets.CellData {
 }
 
 func distanceMiles(distM float32) *sheets.CellData {
+	f := float64(distM) * 0.000621371192
 	return &sheets.CellData{
 		UserEnteredValue: &sheets.ExtendedValue{
-			NumberValue: float64(distM) * 0.000621371192,
+			NumberValue: &f,
 		},
 		UserEnteredFormat: &sheets.CellFormat{
 			NumberFormat: &sheets.NumberFormat{
@@ -194,9 +197,10 @@ func distanceMiles(distM float32) *sheets.CellData {
 }
 
 func distanceMeters(distM float32) *sheets.CellData {
+	f := float64(distM)
 	return &sheets.CellData{
 		UserEnteredValue: &sheets.ExtendedValue{
-			NumberValue: float64(distM),
+			NumberValue: &f,
 		},
 		UserEnteredFormat: &sheets.CellFormat{
 			NumberFormat: &sheets.NumberFormat{
@@ -208,9 +212,10 @@ func distanceMeters(distM float32) *sheets.CellData {
 }
 
 func distanceFeet(distM float32) *sheets.CellData {
+	f := float64(distM) * 3.28084
 	return &sheets.CellData{
 		UserEnteredValue: &sheets.ExtendedValue{
-			NumberValue: float64(distM) * 3.28084,
+			NumberValue: &f,
 		},
 		UserEnteredFormat: &sheets.CellFormat{
 			NumberFormat: &sheets.NumberFormat{
@@ -222,9 +227,10 @@ func distanceFeet(distM float32) *sheets.CellData {
 }
 
 func duration(sec int32) *sheets.CellData {
+	f := float64(sec) / (24 * 60 * 60)
 	return &sheets.CellData{
 		UserEnteredValue: &sheets.ExtendedValue{
-			NumberValue: float64(sec) / (24 * 60 * 60),
+			NumberValue: &f,
 		},
 		UserEnteredFormat: &sheets.CellFormat{
 			NumberFormat: &sheets.NumberFormat{
@@ -233,6 +239,10 @@ func duration(sec int32) *sheets.CellData {
 			},
 		},
 	}
+}
+
+func strPtr(s string) *string {
+	return &s
 }
 
 func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strava.SummaryActivity) *sheets.Spreadsheet {
@@ -248,7 +258,7 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
 				return &sheets.CellData{
 					UserEnteredValue: &sheets.ExtendedValue{
-						StringValue: string(*activity.Type_),
+						StringValue: strPtr(string(*activity.Type_)),
 					},
 				}
 			},
@@ -282,7 +292,7 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
 				return &sheets.CellData{
 					UserEnteredValue: &sheets.ExtendedValue{
-						StringValue: activity.Name,
+						StringValue: &activity.Name,
 					},
 				}
 			},
@@ -292,7 +302,7 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
 				return &sheets.CellData{
 					UserEnteredValue: &sheets.ExtendedValue{
-						StringValue: workoutType[activity.WorkoutType],
+						StringValue: strPtr(workoutType[activity.WorkoutType]),
 					},
 				}
 			},
@@ -302,7 +312,7 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
 				return &sheets.CellData{
 					UserEnteredValue: &sheets.ExtendedValue{
-						StringValue: fmt.Sprintf("https://www.strava.com/activities/%d", activity.Id),
+						StringValue: strPtr(fmt.Sprintf("https://www.strava.com/activities/%d", activity.Id)),
 					},
 				}
 			},
