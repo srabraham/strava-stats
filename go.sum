@@ -119,6 +119,8 @@ github.com/srabraham/strava-oauth-helper v0.0.0-20190319004537-6fa2bae7c3ca h1:T
 github.com/srabraham/strava-oauth-helper v0.0.0-20190319004537-6fa2bae7c3ca/go.mod h1:WxF/OUNdKLErsGco21ekxa/LJCk6qVLXynUlYraYeQM=
 github.com/srabraham/swagger-strava-go v0.0.0-20200927230945-8586820ee900 h1:FzKAJswDuyMpLq6cGeYifWuApthCB7/9VEZV5K4VHzI=
 github.com/srabraham/swagger-strava-go v0.0.0-20200927230945-8586820ee900/go.mod h1:YLeyJZU6wKARvFgQp7bF2jRzYLq1sBkf7qmYCbqcS/w=
+github.com/srabraham/swagger-strava-go v0.0.0-20200930125149-c88c0a6dd054 h1:JJEk7PzVxgyJ1JzVwB3aj3taJBjkjnXgvatCyGAy148=
+github.com/srabraham/swagger-strava-go v0.0.0-20200930125149-c88c0a6dd054/go.mod h1:TDj6lnR0FFX0bhVFAAo9eoC70x0UCjcilycfzbhR+YY=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
