@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/antihax/optional"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -98,12 +99,12 @@ func getLoggedInAthleteProfile(sClient *strava.APIClient, oauthCtx *context.Cont
 func getLoggedInAthleteActivities(sClient *strava.APIClient, oauthCtx *context.Context) *[]strava.SummaryActivity {
 	// Fetch all of the logged-in athlete's activities, 200 at a time.
 	activities := make([]strava.SummaryActivity, 0)
-	for i := 1; ; i++ {
+	for i := int32(1); ; i++ {
 		activitiesPage, _, err := sClient.ActivitiesApi.GetLoggedInAthleteActivities(
 			*oauthCtx,
-			map[string]interface{}{
-				"page":    int32(i),
-				"perPage": int32(200),
+			&strava.ActivitiesApiGetLoggedInAthleteActivitiesOpts{
+				Page: optional.NewInt32(i),
+				PerPage: optional.NewInt32(200),
 			},
 		)
 		if err != nil {
