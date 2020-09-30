@@ -293,7 +293,7 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
 				return &sheets.CellData{
 					UserEnteredValue: &sheets.ExtendedValue{
-						StringValue: &activity.Name,
+						StringValue: strPtr(activity.Name),
 					},
 				}
 			},
