@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/antihax/optional"
+	"google.golang.org/api/option"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -34,6 +35,7 @@ var (
 
 func main() {
 	flag.Parse()
+	ctx := context.Background()
 
 	// Do all the auth stuff first
 	gClient := getGoogleClient()
@@ -61,7 +63,7 @@ func main() {
 		}
 	}
 	// Create a new Spreadsheet and populate it with the Strava data
-	sheetsService, err := sheets.New(gClient)
+	sheetsService, err := sheets.NewService(ctx, option.WithHTTPClient(gClient))
 	if err != nil {
 		log.Fatal(err)
 	}
