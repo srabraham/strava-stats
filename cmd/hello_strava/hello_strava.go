@@ -4,12 +4,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/antihax/optional"
-	"google.golang.org/api/option"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
+
+	"github.com/antihax/optional"
+	"google.golang.org/api/option"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/srabraham/google-oauth-helper/googleauth"
@@ -51,13 +52,13 @@ func main() {
 	activities := *getLoggedInAthleteActivities(sClient, &oauthCtx)
 
 	if *athleteOutFile != "" {
-		err = ioutil.WriteFile(*athleteOutFile, []byte(spew.Sdump(athlete)), 0644)
+		err = os.WriteFile(*athleteOutFile, []byte(spew.Sdump(athlete)), 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 	if *activitiesOutFile != "" {
-		err = ioutil.WriteFile(*activitiesOutFile, []byte(spew.Sdump(activities)), 0644)
+		err = os.WriteFile(*activitiesOutFile, []byte(spew.Sdump(activities)), 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -105,7 +106,7 @@ func getLoggedInAthleteActivities(sClient *strava.APIClient, oauthCtx *context.C
 		activitiesPage, _, err := sClient.ActivitiesApi.GetLoggedInAthleteActivities(
 			*oauthCtx,
 			&strava.ActivitiesApiGetLoggedInAthleteActivitiesOpts{
-				Page: optional.NewInt32(i),
+				Page:    optional.NewInt32(i),
 				PerPage: optional.NewInt32(200),
 			},
 		)
@@ -244,8 +245,14 @@ func duration(sec int32) *sheets.CellData {
 	}
 }
 
-func strPtr(s string) *string {
-	return &s
+func float64Ptr[N float64 | int32](n N) *float64 {
+	f := float64(n)
+	return &f
+}
+
+func strPtr[S ~string](s S) *string {
+	t := string(s)
+	return &t
 }
 
 func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strava.SummaryActivity) *sheets.Spreadsheet {
@@ -301,15 +308,25 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 			},
 		},
 		{
-			header: header("Workout type"),
+			header: header("Activity type"),
 			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
 				return &sheets.CellData{
 					UserEnteredValue: &sheets.ExtendedValue{
-						StringValue: strPtr(workoutType[activity.WorkoutType]),
+						StringValue: strPtr(*activity.Type_),
 					},
 				}
 			},
 		},
+		//{
+		//	header: header("Workout type"),
+		//	cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
+		//		return &sheets.CellData{
+		//			UserEnteredValue: &sheets.ExtendedValue{
+		//				StringValue: strPtr(workoutType[activity.WorkoutType]),
+		//			},
+		//		}
+		//	},
+		//},
 		{
 			header: header("URL"),
 			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
@@ -320,14 +337,24 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 				}
 			},
 		},
+		{
+			header: header("Visibility"),
+			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
+				return &sheets.CellData{
+					UserEnteredValue: &sheets.ExtendedValue{
+						StringValue: strPtr(activity.Visibility),
+					},
+				}
+			},
+		},
 	}
 
 	rowData := make([]*sheets.RowData, 0)
-	header := &sheets.RowData{}
+	theHeader := &sheets.RowData{}
 	for _, cc := range columns {
-		header.Values = append(header.Values, cc.header)
+		theHeader.Values = append(theHeader.Values, cc.header)
 	}
-	rowData = append(rowData, header)
+	rowData = append(rowData, theHeader)
 
 	for _, a := range *activities {
 		row := &sheets.RowData{}
