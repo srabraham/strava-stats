@@ -12,3 +12,6 @@
 *.out
 
 .idea
+
+cmd/hello_strava/hello_strava
+cmd/.DS_Store
