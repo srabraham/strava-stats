@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -10,21 +11,19 @@ import (
 	"time"
 
 	"github.com/antihax/optional"
-	"google.golang.org/api/option"
-
 	"github.com/davecgh/go-spew/spew"
 	"github.com/srabraham/google-oauth-helper/googleauth"
 	"github.com/srabraham/strava-oauth-helper/stravaauth"
-	"google.golang.org/api/sheets/v4"
-
+	"github.com/srabraham/strava-stats/types"
 	strava "github.com/srabraham/swagger-strava-go"
+	"google.golang.org/api/option"
+	"google.golang.org/api/sheets/v4"
 )
 
 var (
-	athleteOutFile    = flag.String("athlete-out-file", "", "File in which to spew athlete details, or blank to not output such a file")
-	activitiesOutFile = flag.String("activities-out-file", "", "File in which to spew out all activities, or blank to not output such a file")
-	timeout           = flag.Duration("timeout", 30*time.Minute, "an overall timeout on the program")
-	workoutType       = map[int32]string{
+	outputJson  = flag.String("output-json", "", "Optional file for JSON output of Strava data")
+	timeout     = flag.Duration("timeout", 30*time.Minute, "an overall timeout on the program")
+	workoutType = map[int32]string{
 		0:  "Run",
 		1:  "Foot race",
 		2:  "Long run",
@@ -43,27 +42,29 @@ func main() {
 	// Do all the auth stuff first
 	gClient := getGoogleClient()
 	stravaScopes := []string{"read_all", "activity:read_all", "profile:read_all"}
-	oauthCtx, err := stravaauth.GetOAuth2Ctx(ctx, strava.ContextOAuth2, stravaScopes)
+	ctx, err := stravaauth.GetOAuth2Ctx(ctx, strava.ContextOAuth2, stravaScopes)
 	if err != nil {
 		log.Fatal(err)
 	}
 	sClient := strava.NewAPIClient(strava.NewConfiguration())
 
 	// Fetch things from Strava
-	athlete := *getLoggedInAthleteProfile(sClient, &oauthCtx)
-	activities := *getLoggedInAthleteActivities(sClient, &oauthCtx)
+	athlete := getLoggedInAthleteProfile(ctx, sClient)
+	activities := getLoggedInAthleteActivities(ctx, sClient)
 
-	if *athleteOutFile != "" {
-		err = os.WriteFile(*athleteOutFile, []byte(spew.Sdump(athlete)), 0644)
+	if *outputJson != "" {
+		data := types.StravaData{Activities: activities, Athlete: athlete}
+		myJson, err := json.MarshalIndent(data, "", "  ")
 		if err != nil {
 			log.Fatal(err)
 		}
-	}
-	if *activitiesOutFile != "" {
-		err = os.WriteFile(*activitiesOutFile, []byte(spew.Sdump(activities)), 0644)
-		if err != nil {
+		if err = os.WriteFile(*outputJson, myJson, 0644); err != nil {
 			log.Fatal(err)
 		}
+		log.Printf("wrote output JSON to %v", *outputJson)
+
+		// do not submit
+		return
 	}
 	// Create a new Spreadsheet and populate it with the Strava data
 	sheetsService, err := sheets.NewService(ctx, option.WithHTTPClient(gClient))
@@ -80,10 +81,17 @@ func main() {
 		resp.SpreadsheetId,
 		&sheets.BatchUpdateSpreadsheetRequest{
 			Requests: []*sheets.Request{
-				{AutoResizeDimensions: &sheets.AutoResizeDimensionsRequest{
-					Dimensions: &sheets.DimensionRange{
-						SheetId:   resp.Sheets[0].Properties.SheetId,
-						Dimension: "COLUMNS"}}}}}).Do()
+				{
+					AutoResizeDimensions: &sheets.AutoResizeDimensionsRequest{
+						Dimensions: &sheets.DimensionRange{
+							SheetId:   resp.Sheets[0].Properties.SheetId,
+							Dimension: "COLUMNS",
+						},
+					},
+				},
+			},
+		},
+	).Do()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -91,22 +99,22 @@ func main() {
 	log.Printf("Spreadsheet is at %s", resp.SpreadsheetUrl)
 }
 
-func getLoggedInAthleteProfile(sClient *strava.APIClient, oauthCtx *context.Context) *strava.DetailedAthlete {
-	athlete, _, err := sClient.AthletesApi.GetLoggedInAthlete(*oauthCtx)
+func getLoggedInAthleteProfile(ctx context.Context, sClient *strava.APIClient) strava.DetailedAthlete {
+	athlete, _, err := sClient.AthletesApi.GetLoggedInAthlete(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("Got athlete:")
 	spew.Dump(athlete)
-	return &athlete
+	return athlete
 }
 
-func getLoggedInAthleteActivities(sClient *strava.APIClient, oauthCtx *context.Context) *[]strava.SummaryActivity {
-	// Fetch all of the logged-in athlete's activities, 200 at a time.
+func getLoggedInAthleteActivities(ctx context.Context, sClient *strava.APIClient) []strava.SummaryActivity {
+	// Fetch all the logged-in athlete's activities, 200 at a time.
 	activities := make([]strava.SummaryActivity, 0)
 	for i := int32(1); ; i++ {
 		activitiesPage, _, err := sClient.ActivitiesApi.GetLoggedInAthleteActivities(
-			*oauthCtx,
+			ctx,
 			&strava.ActivitiesApiGetLoggedInAthleteActivitiesOpts{
 				Page:    optional.NewInt32(i),
 				PerPage: optional.NewInt32(200),
@@ -127,7 +135,7 @@ func getLoggedInAthleteActivities(sClient *strava.APIClient, oauthCtx *context.C
 		log.Println("Most recent activity:")
 		spew.Dump(activities[0])
 	}
-	return &activities
+	return activities
 }
 
 func getGoogleClient() *http.Client {
