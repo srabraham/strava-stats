@@ -37,7 +37,7 @@ create table Athletes (
     ,City varchar(255)
 )
 `
-	dropActivtiesTable = `
+	dropActivitiesTable = `
 drop table if exists Activities
 `
 	createActivitiesTable = `
@@ -45,12 +45,14 @@ create table Activities (
     ID bigint
     ,AthleteID bigint
     ,Name varchar(255)
+    ,Distance bigint
 )
 `
 )
 
 func main() {
 	flag.Parse()
+	log.Print("starting")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 	defer cancel()
 	cfg := mysql.Config{
@@ -71,7 +73,7 @@ func main() {
 	}
 	db.MustExecContext(ctx, dropAthletesTable)
 	db.MustExecContext(ctx, createAthletesTable)
-	db.MustExecContext(ctx, dropActivtiesTable)
+	db.MustExecContext(ctx, dropActivitiesTable)
 	db.MustExecContext(ctx, createActivitiesTable)
 
 	b, err := os.ReadFile(*inputJson)
@@ -90,12 +92,12 @@ func main() {
 	}
 
 	// speedy concurrent inserts, up to n at once
-	p := pool.New().WithMaxGoroutines(50).WithErrors()
+	p := pool.New().WithMaxGoroutines(100).WithErrors().WithFirstError()
 	for _, act := range sd.Activities {
 		act := act
 		p.Go(func() error {
-			_, err = db.NamedExecContext(ctx,
-				"insert into Activities (ID, AthleteID, Name) values (:id, :athlete.id, :name)",
+			_, err := db.NamedExecContext(ctx,
+				"insert into Activities (ID, AthleteID, Name, Distance) values (:id, :athlete.id, :name, :distance)",
 				act)
 			if err != nil {
 				return fmt.Errorf("for activity %v: %w", act, err)
@@ -107,4 +109,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Print("done")
 }
