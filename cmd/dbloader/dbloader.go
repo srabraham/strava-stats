@@ -31,10 +31,10 @@ drop table if exists Athletes
 `
 	createAthletesTable = `
 create table Athletes (
-    ID bigint
-    ,FirstName varchar(255)
-    ,LastName varchar(255)
-    ,City varchar(255)
+	ID bigint not null primary key,
+	FirstName varchar(255) ,
+	LastName varchar(255),
+	City varchar(255)
 )
 `
 	dropActivitiesTable = `
@@ -42,22 +42,64 @@ drop table if exists Activities
 `
 	createActivitiesTable = `
 create table Activities (
-    ID bigint,
-    AthleteID bigint,
-    Name varchar(255),
-    Distance bigint,
-    MovingTime int,
-    ElapsedTime int,
-    TotalElevationGain int,
-    ElevHigh decimal(10, 3),
-    ElevLow decimal(10, 3),
-    Type varchar(255),
-    StartDate timestamp
+	ID bigint not null primary key,
+	AthleteID bigint,
+	Name varchar(255),
+	Distance bigint,
+	MovingTime int,
+	ElapsedTime int,
+	TotalElevationGain int,
+	ElevHigh decimal(10, 3),
+	ElevLow decimal(10, 3),
+	Type varchar(255),
+	StartDate timestamp,
+	foreign key (AthleteID)
+        references Athletes(ID)
+        on delete cascade
 )
 `
+
+	insertIntoAthletes = `
+insert into
+    Athletes (
+              ID,
+              FirstName,
+              LastName,
+              City
+    ) values (
+              :id,
+              :firstname,
+              :lastname,
+              :city
+    )
+`
 	insertIntoActivities = `
-insert into Activities(ID, AthleteID, Name, Distance, MovingTime, ElapsedTime, TotalElevationGain, ElevHigh, ElevLow, Type, StartDate) values
-(:id, :athlete.id, :name, :distance, :movingtime, :elapsedtime, :totalelevationgain, :elevhigh, :elevlow, :type_, :startdate)
+insert into
+    Activities (
+                ID,
+                AthleteID,
+                Name,
+                Distance,
+                MovingTime,
+                ElapsedTime,
+                TotalElevationGain,
+                ElevHigh,
+                ElevLow,
+                Type,
+                StartDate
+    ) values (
+              :id,
+              :athlete.id,
+              :name,
+              :distance,
+              :movingtime,
+              :elapsedtime,
+              :totalelevationgain,
+              :elevhigh,
+              :elevlow,
+              :type_,
+              :startdate
+    )
 `
 )
 
@@ -82,9 +124,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	db.MustExecContext(ctx, dropActivitiesTable)
 	db.MustExecContext(ctx, dropAthletesTable)
 	db.MustExecContext(ctx, createAthletesTable)
-	db.MustExecContext(ctx, dropActivitiesTable)
 	db.MustExecContext(ctx, createActivitiesTable)
 
 	b, err := os.ReadFile(*inputJson)
@@ -95,18 +137,16 @@ func main() {
 	if err = json.Unmarshal(b, &sd); err != nil {
 		log.Fatal(err)
 	}
-	_, err = db.NamedExecContext(ctx,
-		"insert into Athletes (ID, FirstName, LastName, City) values (:id, :firstname, :lastname, :city)",
-		sd.Athlete)
+	_, err = db.NamedExecContext(ctx, insertIntoAthletes, sd.Athlete)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// speedy concurrent inserts, up to n at once
-	p := pool.New().WithMaxGoroutines(100).WithErrors().WithFirstError()
+	p := pool.New().WithContext(ctx).WithMaxGoroutines(100).WithFirstError()
 	for _, act := range sd.Activities {
 		act := act
-		p.Go(func() error {
+		p.Go(func(ctx context.Context) error {
 			_, err := db.NamedExecContext(ctx, insertIntoActivities, act)
 			if err != nil {
 				return fmt.Errorf("for activity %v: %w", act, err)
