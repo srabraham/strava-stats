@@ -42,11 +42,22 @@ drop table if exists Activities
 `
 	createActivitiesTable = `
 create table Activities (
-    ID bigint
-    ,AthleteID bigint
-    ,Name varchar(255)
-    ,Distance bigint
+    ID bigint,
+    AthleteID bigint,
+    Name varchar(255),
+    Distance bigint,
+    MovingTime int,
+    ElapsedTime int,
+    TotalElevationGain int,
+    ElevHigh decimal(10, 3),
+    ElevLow decimal(10, 3),
+    Type varchar(255),
+    StartDate timestamp
 )
+`
+	insertIntoActivities = `
+insert into Activities(ID, AthleteID, Name, Distance, MovingTime, ElapsedTime, TotalElevationGain, ElevHigh, ElevLow, Type, StartDate) values
+(:id, :athlete.id, :name, :distance, :movingtime, :elapsedtime, :totalelevationgain, :elevhigh, :elevlow, :type_, :startdate)
 `
 )
 
@@ -96,9 +107,7 @@ func main() {
 	for _, act := range sd.Activities {
 		act := act
 		p.Go(func() error {
-			_, err := db.NamedExecContext(ctx,
-				"insert into Activities (ID, AthleteID, Name, Distance) values (:id, :athlete.id, :name, :distance)",
-				act)
+			_, err := db.NamedExecContext(ctx, insertIntoActivities, act)
 			if err != nil {
 				return fmt.Errorf("for activity %v: %w", act, err)
 			}
