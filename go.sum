@@ -74,6 +74,8 @@ github.com/srabraham/strava-oauth-helper v0.0.0-20190319023938-412bd592d60f h1:r
 github.com/srabraham/strava-oauth-helper v0.0.0-20190319023938-412bd592d60f/go.mod h1:WxF/OUNdKLErsGco21ekxa/LJCk6qVLXynUlYraYeQM=
 github.com/srabraham/swagger-strava-go v0.0.0-20200930125149-c88c0a6dd054 h1:JJEk7PzVxgyJ1JzVwB3aj3taJBjkjnXgvatCyGAy148=
 github.com/srabraham/swagger-strava-go v0.0.0-20200930125149-c88c0a6dd054/go.mod h1:TDj6lnR0FFX0bhVFAAo9eoC70x0UCjcilycfzbhR+YY=
+github.com/srabraham/swagger-strava-go v0.0.0-20231012134818-666e2a1507ff h1:sz/On+kDV1IBo6brZLPld4cQbo32br3JJ/7COrpITOY=
+github.com/srabraham/swagger-strava-go v0.0.0-20231012134818-666e2a1507ff/go.mod h1:TDj6lnR0FFX0bhVFAAo9eoC70x0UCjcilycfzbhR+YY=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.4.0/go.mod h1:YvHI0jy2hoMjB+UWwv71VJQ9isScKT/TqJzVSSt89Yw=
 github.com/stretchr/objx v0.5.0/go.mod h1:Yh+to48EsGEfYuaHDzXPcE3xhTkx73EhmCGUpEOglKo=

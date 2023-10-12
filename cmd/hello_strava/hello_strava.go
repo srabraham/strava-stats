@@ -121,7 +121,7 @@ func getLoggedInAthleteActivities(ctx context.Context, sClient *strava.APIClient
 			},
 		)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal(fmt.Errorf("[GetLoggedInAthleteActivities]: %w", err))
 		}
 		if len(activitiesPage) == 0 {
 			// No more Strava activities to fetch.
@@ -265,6 +265,11 @@ func strPtr[S ~string](s S) *string {
 	return &t
 }
 
+func boolPtr[B ~bool](b B) *bool {
+	s := bool(b)
+	return &s
+}
+
 func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strava.SummaryActivity) *sheets.Spreadsheet {
 	columns := []cellCalc{
 		{
@@ -348,11 +353,11 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 			},
 		},
 		{
-			header: header("Visibility"),
+			header: header("Is Private"),
 			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
 				return &sheets.CellData{
 					UserEnteredValue: &sheets.ExtendedValue{
-						StringValue: strPtr(activity.Visibility),
+						BoolValue: boolPtr(activity.Private),
 					},
 				}
 			},
