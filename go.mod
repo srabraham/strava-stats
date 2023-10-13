@@ -11,6 +11,7 @@ require (
 	github.com/srabraham/google-oauth-helper v0.0.0-20220927235553-1001609959ac
 	github.com/srabraham/strava-oauth-helper v0.0.0-20190319023938-412bd592d60f
 	github.com/srabraham/swagger-strava-go v0.0.0-20231012134818-666e2a1507ff
+	github.com/twpayne/go-polyline v1.1.1
 	google.golang.org/api v0.146.0
 )
 

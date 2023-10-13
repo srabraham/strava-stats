@@ -10,11 +10,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/srabraham/strava-stats/internal/types"
+
 	"github.com/antihax/optional"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/srabraham/google-oauth-helper/googleauth"
 	"github.com/srabraham/strava-oauth-helper/stravaauth"
-	"github.com/srabraham/strava-stats/types"
 	strava "github.com/srabraham/swagger-strava-go"
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"

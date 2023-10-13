@@ -9,10 +9,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/srabraham/strava-stats/internal/types"
+
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/sourcegraph/conc/pool"
-	"github.com/srabraham/strava-stats/types"
 )
 
 var (
