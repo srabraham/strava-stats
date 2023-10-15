@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/srabraham/strava-stats/internal/types"
@@ -23,7 +24,7 @@ var (
 	dbPort     = flag.String("db-port", "3306", "Port for database connection")
 	dbName     = flag.String("db-name", "strava", "Name for database")
 
-	inputJson = flag.String("input-json", "", "Input file with Strava data")
+	inputJsons = flag.String("input-jsons", "", "Comma-separated list of input files with Strava data")
 )
 
 const (
@@ -130,17 +131,28 @@ func main() {
 	db.MustExecContext(ctx, createAthletesTable)
 	db.MustExecContext(ctx, createActivitiesTable)
 
-	b, err := os.ReadFile(*inputJson)
-	if err != nil {
-		log.Fatal(err)
+	inputFiles := strings.Split(*inputJsons, ",")
+	for _, f := range inputFiles {
+		b, err := os.ReadFile(f)
+		if err != nil {
+			log.Fatal(err)
+		}
+		var sd types.StravaData
+		if err = json.Unmarshal(b, &sd); err != nil {
+			log.Fatal(err)
+		}
+
+		if err := insertToDatabase(ctx, db, sd); err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("done for file %v", f)
 	}
-	var sd types.StravaData
-	if err = json.Unmarshal(b, &sd); err != nil {
-		log.Fatal(err)
-	}
-	_, err = db.NamedExecContext(ctx, insertIntoAthletes, sd.Athlete)
+}
+
+func insertToDatabase(ctx context.Context, db *sqlx.DB, sd types.StravaData) error {
+	_, err := db.NamedExecContext(ctx, insertIntoAthletes, sd.Athlete)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("[NamedExecContext] insertIntoAthletes: %w", err)
 	}
 
 	// speedy concurrent inserts, up to n at once
@@ -157,7 +169,9 @@ func main() {
 	}
 	err = p.Wait()
 	if err != nil {
-		log.Fatal(err)
+		if err != nil {
+			return fmt.Errorf("[Wait]: %w", err)
+		}
 	}
-	log.Print("done")
+	return nil
 }
