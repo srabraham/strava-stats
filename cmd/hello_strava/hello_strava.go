@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	outputJson  = flag.String("output-json", "", "Optional file for JSON output of Strava data")
+	outputJson  = flag.String("output-json", "", "Optional file for JSON output of Strava data. If this is set, then the program will not create a Google Sheet.")
 	timeout     = flag.Duration("timeout", 30*time.Minute, "an overall timeout on the program")
 	workoutType = map[int32]string{
 		0:  "Run",
@@ -40,8 +40,14 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
 	defer cancel()
 
+	// only make a spreadsheet if an output JSON file *has not* been requested
+	makeSpreadsheet := *outputJson == ""
+
 	// Do all the auth stuff first
-	gClient := getGoogleClient()
+	var gClient *http.Client
+	if makeSpreadsheet {
+		gClient = getGoogleClient()
+	}
 	stravaScopes := []string{"read_all", "activity:read_all", "profile:read_all"}
 	ctx, err := stravaauth.GetOAuth2Ctx(ctx, strava.ContextOAuth2, stravaScopes)
 	if err != nil {
@@ -63,41 +69,40 @@ func main() {
 			log.Fatal(err)
 		}
 		log.Printf("wrote output JSON to %v", *outputJson)
-
-		// do not submit
-		return
 	}
-	// Create a new Spreadsheet and populate it with the Strava data
-	sheetsService, err := sheets.NewService(ctx, option.WithHTTPClient(gClient))
-	if err != nil {
-		log.Fatal(err)
-	}
-	ss := createStatsSpreadsheet(&athlete, &activities)
-	resp, err := sheetsService.Spreadsheets.Create(ss).Context(ctx).Do()
-	if err != nil {
-		log.Fatal(err)
-	}
-	// Resize the Sheet to make the columns wide enough.
-	_, err = sheetsService.Spreadsheets.BatchUpdate(
-		resp.SpreadsheetId,
-		&sheets.BatchUpdateSpreadsheetRequest{
-			Requests: []*sheets.Request{
-				{
-					AutoResizeDimensions: &sheets.AutoResizeDimensionsRequest{
-						Dimensions: &sheets.DimensionRange{
-							SheetId:   resp.Sheets[0].Properties.SheetId,
-							Dimension: "COLUMNS",
+	if makeSpreadsheet {
+		// Create a new Spreadsheet and populate it with the Strava data
+		sheetsService, err := sheets.NewService(ctx, option.WithHTTPClient(gClient))
+		if err != nil {
+			log.Fatal(err)
+		}
+		ss := createStatsSpreadsheet(&athlete, &activities)
+		resp, err := sheetsService.Spreadsheets.Create(ss).Context(ctx).Do()
+		if err != nil {
+			log.Fatal(err)
+		}
+		// Resize the Sheet to make the columns wide enough.
+		_, err = sheetsService.Spreadsheets.BatchUpdate(
+			resp.SpreadsheetId,
+			&sheets.BatchUpdateSpreadsheetRequest{
+				Requests: []*sheets.Request{
+					{
+						AutoResizeDimensions: &sheets.AutoResizeDimensionsRequest{
+							Dimensions: &sheets.DimensionRange{
+								SheetId:   resp.Sheets[0].Properties.SheetId,
+								Dimension: "COLUMNS",
+							},
 						},
 					},
 				},
 			},
-		},
-	).Do()
-	if err != nil {
-		log.Fatal(err)
+		).Do()
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("Response = %v", resp)
+		log.Printf("Spreadsheet is at %s", resp.SpreadsheetUrl)
 	}
-	log.Printf("Response = %v", resp)
-	log.Printf("Spreadsheet is at %s", resp.SpreadsheetUrl)
 }
 
 func getLoggedInAthleteProfile(ctx context.Context, sClient *strava.APIClient) strava.DetailedAthlete {
@@ -328,7 +333,7 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
 				return &sheets.CellData{
 					UserEnteredValue: &sheets.ExtendedValue{
-						StringValue: strPtr(*activity.Type_),
+						StringValue: strPtr(*activity.SportType),
 					},
 				}
 			},
