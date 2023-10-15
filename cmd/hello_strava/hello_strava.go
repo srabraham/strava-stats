@@ -22,17 +22,8 @@ import (
 )
 
 var (
-	outputJson  = flag.String("output-json", "", "Optional file for JSON output of Strava data. If this is set, then the program will not create a Google Sheet.")
-	timeout     = flag.Duration("timeout", 30*time.Minute, "an overall timeout on the program")
-	workoutType = map[int32]string{
-		0:  "Run",
-		1:  "Foot race",
-		2:  "Long run",
-		3:  "Run workout",
-		10: "Bike",
-		11: "Bike race",
-		12: "Bike workout",
-	}
+	outputJson = flag.String("output-json", "", "Optional file for JSON output of Strava data. If this is set, then the program will not create a Google Sheet.")
+	timeout    = flag.Duration("timeout", 30*time.Minute, "an overall timeout on the program")
 )
 
 func main() {
@@ -338,16 +329,6 @@ func createStatsSpreadsheet(athlete *strava.DetailedAthlete, activities *[]strav
 				}
 			},
 		},
-		//{
-		//	header: header("Workout type"),
-		//	cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
-		//		return &sheets.CellData{
-		//			UserEnteredValue: &sheets.ExtendedValue{
-		//				StringValue: strPtr(workoutType[activity.WorkoutType]),
-		//			},
-		//		}
-		//	},
-		//},
 		{
 			header: header("URL"),
 			cellFunc: func(athlete *strava.DetailedAthlete, activity *strava.SummaryActivity) *sheets.CellData {
