@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/srabraham/strava-stats/internal/types"
+	"go.seanabraham.com/strava-stats/internal/types"
 	"github.com/twpayne/go-polyline"
 )
 

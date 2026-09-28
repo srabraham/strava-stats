@@ -1,6 +1,6 @@
 package types
 
-import "github.com/srabraham/swagger-strava-go"
+import "go.seanabraham.com/swagger-strava-go"
 
 type StravaData struct {
 	Athlete    swagger.DetailedAthlete   `json:"athlete"`

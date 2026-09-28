@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/srabraham/strava-stats/internal/types"
+	"go.seanabraham.com/strava-stats/internal/types"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"

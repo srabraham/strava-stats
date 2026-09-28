@@ -1,4 +1,4 @@
-module github.com/srabraham/strava-stats
+module go.seanabraham.com/strava-stats
 
 go 1.27.1
 
@@ -8,10 +8,10 @@ require (
 	github.com/go-sql-driver/mysql v1.10.1
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/sourcegraph/conc v0.3.0
-	github.com/srabraham/google-oauth-helper v0.0.0-20250709121607-82db268b5392
-	github.com/srabraham/strava-oauth-helper v0.0.0-20190319023938-412bd592d60f
-	github.com/srabraham/swagger-strava-go v0.0.0-20231012134818-666e2a1507ff
 	github.com/twpayne/go-polyline v1.1.1
+	go.seanabraham.com/google-oauth-helper v0.0.0-20260928194111-020cc7ef9ced
+	go.seanabraham.com/strava-oauth-helper v0.0.0-20260928195110-7501d490baad
+	go.seanabraham.com/swagger-strava-go v0.0.0-20260928195405-68cfa9f0fe17
 	google.golang.org/api v0.297.0
 )
 
